@@ -9,15 +9,18 @@ public class StatementService
     private readonly IStatementParser _parser;
     private readonly IStatementRepository _statementRepo;
     private readonly ITransactionRepository _transactionRepo;
+    private readonly ICategorizationService _categorizationService;
 
     public StatementService(
         IStatementParser parser,
         IStatementRepository statementRepo,
-        ITransactionRepository transactionRepo)
+        ITransactionRepository transactionRepo,
+        ICategorizationService categorizationService)
     {
         _parser = parser;
         _statementRepo = statementRepo;
         _transactionRepo = transactionRepo;
+        _categorizationService = categorizationService;
     }
 
     public async Task<ParseResultDto> ParseUploadAsync(Stream fileStream, string fileName)
@@ -70,6 +73,10 @@ public class StatementService
         if (transactions.Count > 0)
         {
             await _transactionRepo.AddRangeAsync(transactions, cancellationToken);
+            await _transactionRepo.SaveChangesAsync(cancellationToken);
+
+            // Auto-categorize transactions based on merchant rules
+            await _categorizationService.CategorizeAsync(transactions, cancellationToken);
             await _transactionRepo.SaveChangesAsync(cancellationToken);
         }
 
