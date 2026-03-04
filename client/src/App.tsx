@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { store } from "./store/store";
 import Layout from "./shared/components/Layout";
 import UploadPage from "./features/upload/UploadPage";
+import CategoriesPage from "./features/categories/CategoriesPage";
 
 const Dashboard = () => (
   <div>
@@ -32,13 +33,6 @@ const Income = () => (
   </div>
 );
 
-const Categories = () => (
-  <div>
-    <h2 className="text-2xl font-bold mb-4">Categories</h2>
-    <p className="text-muted-foreground">Coming soon</p>
-  </div>
-);
-
 function App() {
   return (
     <Provider store={store}>
@@ -50,7 +44,7 @@ function App() {
             <Route path="/upload" element={<UploadPage />} />
             <Route path="/budgets" element={<Budgets />} />
             <Route path="/income" element={<Income />} />
-            <Route path="/categories" element={<Categories />} />
+            <Route path="/categories" element={<CategoriesPage />} />
           </Routes>
         </Layout>
       </BrowserRouter>
