@@ -1,13 +1,14 @@
-import { NavLink } from 'react-router-dom';
-import type { ReactNode } from 'react';
+import { NavLink } from "react-router-dom";
+import type { ReactNode } from "react";
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: '📊' },
-  { to: '/transactions', label: 'Transactions', icon: '💳' },
-  { to: '/upload', label: 'Upload', icon: '📁' },
-  { to: '/budgets', label: 'Budgets', icon: '🎯' },
-  { to: '/income', label: 'Income', icon: '💰' },
-  { to: '/categories', label: 'Categories', icon: '🏷️' },
+  { to: "/", label: "Dashboard", icon: "📊" },
+  { to: "/transactions", label: "Transactions", icon: "💳" },
+  { to: "/upload", label: "Upload", icon: "📁" },
+  { to: "/budgets", label: "Budgets", icon: "🎯" },
+  { to: "/income", label: "Income", icon: "💰" },
+  { to: "/categories", label: "Categories", icon: "🏷️" },
+  { to: "/categories/merchants", label: "Merchant Rules", icon: "🏪" },
 ];
 
 interface LayoutProps {
@@ -26,12 +27,12 @@ export default function Layout({ children }: LayoutProps) {
             <NavLink
               key={item.to}
               to={item.to}
-              end={item.to === '/'}
+              end={item.to === "/"}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                 }`
               }
             >
@@ -41,9 +42,7 @@ export default function Layout({ children }: LayoutProps) {
           ))}
         </nav>
       </aside>
-      <main className="flex-1 overflow-auto p-6">
-        {children}
-      </main>
+      <main className="flex-1 overflow-auto p-6">{children}</main>
     </div>
   );
 }

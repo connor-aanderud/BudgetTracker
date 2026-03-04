@@ -4,6 +4,7 @@ import { store } from "./store/store";
 import Layout from "./shared/components/Layout";
 import UploadPage from "./features/upload/UploadPage";
 import CategoriesPage from "./features/categories/CategoriesPage";
+import MerchantRulesPage from "./features/categories/MerchantRulesPage";
 
 const Dashboard = () => (
   <div>
@@ -45,6 +46,10 @@ function App() {
             <Route path="/budgets" element={<Budgets />} />
             <Route path="/income" element={<Income />} />
             <Route path="/categories" element={<CategoriesPage />} />
+            <Route
+              path="/categories/merchants"
+              element={<MerchantRulesPage />}
+            />
           </Routes>
         </Layout>
       </BrowserRouter>
