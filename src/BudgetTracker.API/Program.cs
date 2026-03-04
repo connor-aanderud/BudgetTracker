@@ -1,6 +1,8 @@
 using Asp.Versioning;
 using BudgetTracker.Application.Interfaces;
 using BudgetTracker.Application.Mapping;
+using BudgetTracker.Application.Services;
+using BudgetTracker.Application.Services.Parsing;
 using BudgetTracker.Data;
 using BudgetTracker.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +24,10 @@ builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IMerchantRepository, MerchantRepository>();
 builder.Services.AddScoped<IIncomeRepository, IncomeRepository>();
 builder.Services.AddScoped<IBudgetRepository, BudgetRepository>();
+
+// Services
+builder.Services.AddScoped<IStatementParser, CsvStatementParser>();
+builder.Services.AddScoped<StatementService>();
 
 // API Versioning
 builder.Services.AddApiVersioning(options =>
