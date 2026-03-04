@@ -1,7 +1,8 @@
-import { Provider } from 'react-redux';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { store } from './store/store';
-import Layout from './shared/components/Layout';
+import { Provider } from "react-redux";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { store } from "./store/store";
+import Layout from "./shared/components/Layout";
+import UploadPage from "./features/upload/UploadPage";
 
 const Dashboard = () => (
   <div>
@@ -13,13 +14,6 @@ const Dashboard = () => (
 const Transactions = () => (
   <div>
     <h2 className="text-2xl font-bold mb-4">Transactions</h2>
-    <p className="text-muted-foreground">Coming soon</p>
-  </div>
-);
-
-const Upload = () => (
-  <div>
-    <h2 className="text-2xl font-bold mb-4">Upload Statement</h2>
     <p className="text-muted-foreground">Coming soon</p>
   </div>
 );
@@ -53,7 +47,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/transactions" element={<Transactions />} />
-            <Route path="/upload" element={<Upload />} />
+            <Route path="/upload" element={<UploadPage />} />
             <Route path="/budgets" element={<Budgets />} />
             <Route path="/income" element={<Income />} />
             <Route path="/categories" element={<Categories />} />

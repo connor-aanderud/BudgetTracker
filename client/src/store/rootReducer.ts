@@ -1,6 +1,6 @@
 import { combineReducers } from '@reduxjs/toolkit';
+import statementsReducer from '@/features/upload/statementsSlice';
 
 export const rootReducer = combineReducers({
-  // Add slices as they're implemented
-  _placeholder: (state = null) => state,
+  statements: statementsReducer,
 });
