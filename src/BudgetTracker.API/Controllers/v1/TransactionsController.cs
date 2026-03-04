@@ -35,6 +35,66 @@ public class TransactionsController : ControllerBase
     }
 
     /// <summary>
+    /// Get a filtered, paginated list of transactions.
+    /// </summary>
+    [HttpGet]
+    public async Task<ActionResult<ApiResponse<PagedResult<TransactionDto>>>> GetAll(
+        [FromQuery] TransactionFilterParams filters,
+        CancellationToken cancellationToken)
+    {
+        var result = await _transactionRepo.GetFilteredAsync(filters, cancellationToken);
+        var dtos = _mapper.Map<List<TransactionDto>>(result.Items);
+
+        var pagedDto = new PagedResult<TransactionDto>
+        {
+            Items = dtos,
+            TotalCount = result.TotalCount,
+            Page = result.Page,
+            PageSize = result.PageSize
+        };
+
+        return Ok(ApiResponse<PagedResult<TransactionDto>>.Ok(pagedDto));
+    }
+
+    /// <summary>
+    /// Bulk-update the category for multiple transactions.
+    /// </summary>
+    [HttpPut("bulk-categorize")]
+    public async Task<ActionResult<ApiResponse<object>>> BulkCategorize(
+        [FromBody] BulkCategorizeRequest request,
+        CancellationToken cancellationToken)
+    {
+        var category = await _categoryRepo.GetByIdAsync(request.CategoryId, cancellationToken);
+        if (category is null)
+            return BadRequest(ApiResponse<object>.Fail($"Category with ID {request.CategoryId} not found."));
+
+        await _transactionRepo.BulkUpdateCategoryAsync(request.Ids, request.CategoryId, cancellationToken);
+        await _transactionRepo.SaveChangesAsync(cancellationToken);
+
+        return Ok(ApiResponse<object>.Ok(null!, $"{request.Ids.Count} transaction(s) categorized."));
+    }
+
+    /// <summary>
+    /// Bulk-delete multiple transactions by ID.
+    /// </summary>
+    [HttpDelete("bulk-delete")]
+    public async Task<ActionResult<ApiResponse<object>>> BulkDelete(
+        [FromBody] BulkDeleteRequest request,
+        CancellationToken cancellationToken)
+    {
+        var transactions = await _transactionRepo.FindAsync(t => request.Ids.Contains(t.Id), cancellationToken);
+        if (transactions.Count == 0)
+            return NotFound(ApiResponse<object>.Fail("No transactions found for the provided IDs."));
+
+        foreach (var transaction in transactions)
+            _transactionRepo.Remove(transaction);
+
+        await _transactionRepo.SaveChangesAsync(cancellationToken);
+
+        return Ok(ApiResponse<object>.Ok(null!, $"{transactions.Count} transaction(s) deleted."));
+    }
+
+    /// <summary>
     /// Reassign a transaction's category, optionally creating a merchant rule.
     /// </summary>
     [HttpPut("{id:int}/category")]
