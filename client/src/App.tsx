@@ -9,6 +9,7 @@ import TransactionsPage from "./features/transactions/TransactionsPage";
 import IncomePage from "./features/income/IncomePage";
 import BudgetSetupPage from "./features/budgets/BudgetSetupPage";
 import Dashboard from "./features/dashboard/Dashboard";
+import SettingsPage from "./features/settings/SettingsPage";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
               path="/categories/merchants"
               element={<MerchantRulesPage />}
             />
+            <Route path="/settings" element={<SettingsPage />} />
           </Routes>
         </Layout>
       </BrowserRouter>

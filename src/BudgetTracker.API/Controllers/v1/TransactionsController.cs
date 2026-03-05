@@ -1,3 +1,4 @@
+using System.Text;
 using Asp.Versioning;
 using AutoMapper;
 using BudgetTracker.Application.Common;
@@ -142,5 +143,57 @@ public class TransactionsController : ControllerBase
 
         var dto = _mapper.Map<TransactionDto>(transaction);
         return Ok(ApiResponse<TransactionDto>.Ok(dto, "Transaction category reassigned."));
+    }
+
+    [HttpGet("export")]
+    public async Task<IActionResult> Export(
+        [FromQuery] TransactionFilterParams filters,
+        CancellationToken cancellationToken)
+    {
+        // Force no pagination — fetch all matching transactions
+        filters.Page = 1;
+        filters.PageSize = int.MaxValue;
+
+        var result = await _transactionRepo.GetFilteredAsync(filters, cancellationToken);
+        var transactions = result.Items;
+
+        var categories = await _categoryRepo.GetAllAsync(cancellationToken);
+        var categoryLookup = categories.ToDictionary(c => c.Id, c => c.Name);
+
+        var merchants = await _merchantRepo.GetAllAsync(cancellationToken);
+        var merchantLookup = merchants.ToDictionary(m => m.Id, m => m.NormalizedName);
+
+        var sb = new StringBuilder();
+        sb.AppendLine("Date,Description,Category,Merchant,Amount,Type");
+
+        foreach (var t in transactions)
+        {
+            var categoryName = t.CategoryId.HasValue && categoryLookup.TryGetValue(t.CategoryId.Value, out var catName)
+                ? catName
+                : "Uncategorized";
+
+            var merchantName = t.MerchantId.HasValue && merchantLookup.TryGetValue(t.MerchantId.Value, out var merName)
+                ? merName
+                : "";
+
+            var description = EscapeCsvField(t.RawDescription);
+            var escapedCategory = EscapeCsvField(categoryName);
+            var escapedMerchant = EscapeCsvField(merchantName);
+            var type = t.IsCredit ? "Credit" : "Debit";
+
+            sb.AppendLine($"{t.TransactionDate:yyyy-MM-dd},{description},{escapedCategory},{escapedMerchant},{t.Amount},{type}");
+        }
+
+        var now = DateTime.Now;
+        var filename = $"transactions_{now:yyyy-MM}.csv";
+
+        return File(Encoding.UTF8.GetBytes(sb.ToString()), "text/csv", filename);
+    }
+
+    private static string EscapeCsvField(string field)
+    {
+        if (field.Contains(',') || field.Contains('"') || field.Contains('\n'))
+            return $"\"{field.Replace("\"", "\"\"")}\"";
+        return field;
     }
 }

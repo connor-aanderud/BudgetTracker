@@ -1,6 +1,14 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { Search, Loader2, ChevronUp, ChevronDown, Trash2 } from 'lucide-react';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { useEffect, useRef, useState, useCallback } from "react";
+import {
+  Search,
+  Loader2,
+  ChevronUp,
+  ChevronDown,
+  Trash2,
+  Download,
+} from "lucide-react";
+import apiClient from "@/services/apiClient";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   fetchTransactions,
   updateFilters,
@@ -11,10 +19,10 @@ import {
   bulkCategorize,
   bulkDelete,
   reassignCategory,
-} from './transactionsSlice';
-import { fetchCategories } from '@/features/categories/categoriesSlice';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+} from "./transactionsSlice";
+import { fetchCategories } from "@/features/categories/categoriesSlice";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -22,14 +30,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -37,26 +45,26 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
   const year = d.getFullYear();
   return `${month}/${day}/${year}`;
 }
 
 function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
   }).format(amount);
 }
 
 function truncate(str: string, maxLen: number): string {
   if (str.length <= maxLen) return str;
-  return str.slice(0, maxLen) + '...';
+  return str.slice(0, maxLen) + "...";
 }
 
 export default function TransactionsPage() {
@@ -69,7 +77,7 @@ export default function TransactionsPage() {
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [bulkCategoryId, setBulkCategoryId] = useState<string>('');
+  const [bulkCategoryId, setBulkCategoryId] = useState<string>("");
 
   useEffect(() => {
     dispatch(fetchTransactions());
@@ -86,7 +94,7 @@ export default function TransactionsPage() {
         dispatch(updateFilters({ search: value }));
       }, 300);
     },
-    [dispatch]
+    [dispatch],
   );
 
   useEffect(() => {
@@ -102,27 +110,27 @@ export default function TransactionsPage() {
       if (filters.sortBy === column) {
         dispatch(
           updateFilters({
-            sortDir: filters.sortDir === 'asc' ? 'desc' : 'asc',
-          })
+            sortDir: filters.sortDir === "asc" ? "desc" : "asc",
+          }),
         );
       } else {
-        dispatch(updateFilters({ sortBy: column, sortDir: 'asc' }));
+        dispatch(updateFilters({ sortBy: column, sortDir: "asc" }));
       }
     },
-    [dispatch, filters.sortBy, filters.sortDir]
+    [dispatch, filters.sortBy, filters.sortDir],
   );
 
   const handleInlineCategory = useCallback(
     (transactionId: number, categoryId: string) => {
-      if (categoryId === 'none') return;
+      if (categoryId === "none") return;
       dispatch(
         reassignCategory({
           transactionId,
           categoryId: Number(categoryId),
-        })
+        }),
       );
     },
-    [dispatch]
+    [dispatch],
   );
 
   const handleBulkCategorize = useCallback(() => {
@@ -131,9 +139,9 @@ export default function TransactionsPage() {
       bulkCategorize({
         ids: selectedIds,
         categoryId: Number(bulkCategoryId),
-      })
+      }),
     );
-    setBulkCategoryId('');
+    setBulkCategoryId("");
   }, [dispatch, bulkCategoryId, selectedIds]);
 
   const handleBulkDelete = useCallback(() => {
@@ -154,6 +162,35 @@ export default function TransactionsPage() {
     }
   }, [dispatch, data, selectedIds]);
 
+  const handleExport = async () => {
+    try {
+      const params: Record<string, string> = {};
+      if (filters.dateFrom) params.DateFrom = filters.dateFrom;
+      if (filters.dateTo) params.DateTo = filters.dateTo;
+      if (filters.categoryIds?.length)
+        params.CategoryIds = filters.categoryIds.join(",");
+      if (filters.amountMin != null)
+        params.AmountMin = String(filters.amountMin);
+      if (filters.amountMax != null)
+        params.AmountMax = String(filters.amountMax);
+      if (filters.search) params.Search = filters.search;
+
+      const response = await apiClient.get("/transactions/export", {
+        params,
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `transactions_${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      // silently fail
+    }
+  };
+
   const items = data?.items ?? [];
   const totalCount = data?.totalCount ?? 0;
   const totalPages = data?.totalPages ?? 1;
@@ -166,9 +203,8 @@ export default function TransactionsPage() {
     items.length > 0 && items.every((t) => selectedIds.includes(t.id));
 
   const SortIcon = ({ column }: { column: string }) => {
-    if (filters.sortBy !== column)
-      return <span className="inline-block w-4" />;
-    return filters.sortDir === 'asc' ? (
+    if (filters.sortBy !== column) return <span className="inline-block w-4" />;
+    return filters.sortDir === "asc" ? (
       <ChevronUp className="inline h-4 w-4" />
     ) : (
       <ChevronDown className="inline h-4 w-4" />
@@ -178,11 +214,17 @@ export default function TransactionsPage() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold mb-1">Transactions</h2>
-        <p className="text-muted-foreground">
-          View and manage your transactions
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-2xl font-bold mb-1">Transactions</h2>
+          <p className="text-muted-foreground">
+            View and manage your transactions
+          </p>
+        </div>
+        <Button variant="outline" onClick={handleExport}>
+          <Download className="mr-2 h-4 w-4" />
+          Export CSV
+        </Button>
       </div>
 
       {/* Search bar */}
@@ -202,12 +244,12 @@ export default function TransactionsPage() {
           <label className="text-sm font-medium">Date From</label>
           <Input
             type="date"
-            value={filters.dateFrom ?? ''}
+            value={filters.dateFrom ?? ""}
             onChange={(e) =>
               dispatch(
                 updateFilters({
                   dateFrom: e.target.value || null,
-                })
+                }),
               )
             }
             className="w-40"
@@ -217,12 +259,12 @@ export default function TransactionsPage() {
           <label className="text-sm font-medium">Date To</label>
           <Input
             type="date"
-            value={filters.dateTo ?? ''}
+            value={filters.dateTo ?? ""}
             onChange={(e) =>
               dispatch(
                 updateFilters({
                   dateTo: e.target.value || null,
-                })
+                }),
               )
             }
             className="w-40"
@@ -234,14 +276,13 @@ export default function TransactionsPage() {
             value={
               filters.categoryIds && filters.categoryIds.length === 1
                 ? String(filters.categoryIds[0])
-                : 'all'
+                : "all"
             }
             onValueChange={(value) =>
               dispatch(
                 updateFilters({
-                  categoryIds:
-                    value === 'all' ? null : [Number(value)],
-                })
+                  categoryIds: value === "all" ? null : [Number(value)],
+                }),
               )
             }
           >
@@ -263,12 +304,12 @@ export default function TransactionsPage() {
           <Input
             type="number"
             placeholder="0.00"
-            value={filters.amountMin ?? ''}
+            value={filters.amountMin ?? ""}
             onChange={(e) =>
               dispatch(
                 updateFilters({
                   amountMin: e.target.value ? Number(e.target.value) : null,
-                })
+                }),
               )
             }
             className="w-28"
@@ -279,12 +320,12 @@ export default function TransactionsPage() {
           <Input
             type="number"
             placeholder="0.00"
-            value={filters.amountMax ?? ''}
+            value={filters.amountMax ?? ""}
             onChange={(e) =>
               dispatch(
                 updateFilters({
                   amountMax: e.target.value ? Number(e.target.value) : null,
-                })
+                }),
               )
             }
             className="w-28"
@@ -299,10 +340,7 @@ export default function TransactionsPage() {
             {selectedIds.length} selected
           </span>
           <div className="flex items-center gap-2">
-            <Select
-              value={bulkCategoryId}
-              onValueChange={setBulkCategoryId}
-            >
+            <Select value={bulkCategoryId} onValueChange={setBulkCategoryId}>
               <SelectTrigger className="w-44">
                 <SelectValue placeholder="Assign category" />
               </SelectTrigger>
@@ -368,14 +406,14 @@ export default function TransactionsPage() {
                 </TableHead>
                 <TableHead
                   className="cursor-pointer select-none"
-                  onClick={() => handleSort('date')}
+                  onClick={() => handleSort("date")}
                 >
                   Date <SortIcon column="date" />
                 </TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead
                   className="cursor-pointer select-none text-right"
-                  onClick={() => handleSort('amount')}
+                  onClick={() => handleSort("amount")}
                 >
                   Amount <SortIcon column="amount" />
                 </TableHead>
@@ -415,12 +453,10 @@ export default function TransactionsPage() {
                     </TableCell>
                     <TableCell
                       className={`text-right whitespace-nowrap font-medium ${
-                        txn.isCredit
-                          ? 'text-green-600 dark:text-green-400'
-                          : ''
+                        txn.isCredit ? "text-green-600 dark:text-green-400" : ""
                       }`}
                     >
-                      {txn.isCredit ? '+' : '-'}
+                      {txn.isCredit ? "+" : "-"}
                       {formatCurrency(txn.amount)}
                     </TableCell>
                     <TableCell>
@@ -428,7 +464,7 @@ export default function TransactionsPage() {
                         value={
                           txn.categoryId !== null
                             ? String(txn.categoryId)
-                            : 'none'
+                            : "none"
                         }
                         onValueChange={(value) =>
                           handleInlineCategory(txn.id, value)
@@ -440,10 +476,7 @@ export default function TransactionsPage() {
                         <SelectContent>
                           <SelectItem value="none">Uncategorized</SelectItem>
                           {categories.map((cat) => (
-                            <SelectItem
-                              key={cat.id}
-                              value={String(cat.id)}
-                            >
+                            <SelectItem key={cat.id} value={String(cat.id)}>
                               {cat.name}
                             </SelectItem>
                           ))}
@@ -451,7 +484,7 @@ export default function TransactionsPage() {
                       </Select>
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
-                      {txn.statementFileName ?? '-'}
+                      {txn.statementFileName ?? "-"}
                     </TableCell>
                   </TableRow>
                 ))
@@ -498,7 +531,7 @@ export default function TransactionsPage() {
             <DialogTitle>Delete Transactions</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete {selectedIds.length} selected
-              transaction{selectedIds.length !== 1 ? 's' : ''}? This action
+              transaction{selectedIds.length !== 1 ? "s" : ""}? This action
               cannot be undone.
             </DialogDescription>
           </DialogHeader>
