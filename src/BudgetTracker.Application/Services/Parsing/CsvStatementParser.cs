@@ -39,7 +39,7 @@ public class CsvStatementParser : IStatementParser
             HasHeaderRecord = true,
             MissingFieldFound = null,
             HeaderValidated = null,
-            BadDataFound = context => result.Warnings.Add($"Bad data at row {context.Context.Parser.Row}: {context.Field}")
+            BadDataFound = context => result.Warnings.Add($"Bad data at row {context.Context?.Parser?.Row}: {context.Field}")
         });
 
         csvReader.Read();
