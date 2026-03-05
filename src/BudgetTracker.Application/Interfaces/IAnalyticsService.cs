@@ -9,4 +9,5 @@ public interface IAnalyticsService
     Task<List<BudgetStatusDto>> GetBudgetStatusAsync(string month, CancellationToken cancellationToken = default);
     Task<List<TopMerchantDto>> GetTopMerchantsAsync(int months, int limit, CancellationToken cancellationToken = default);
     Task<List<MonthlyComparisonDto>> GetMonthlyComparisonAsync(string month, CancellationToken cancellationToken = default);
+    Task<List<SpendingTrendDto>> GetSpendingTrendsAsync(int months, int? categoryId, CancellationToken cancellationToken = default);
 }

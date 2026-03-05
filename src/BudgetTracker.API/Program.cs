@@ -29,6 +29,8 @@ builder.Services.AddScoped<IBudgetRepository, BudgetRepository>();
 builder.Services.AddScoped<IStatementParser, CsvStatementParser>();
 builder.Services.AddScoped<ICategorizationService, CategorizationService>();
 builder.Services.AddScoped<StatementService>();
+builder.Services.AddScoped<IBudgetService, BudgetService>();
+builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 
 // API Versioning
 builder.Services.AddApiVersioning(options =>
