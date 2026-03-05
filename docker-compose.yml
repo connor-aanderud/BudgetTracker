@@ -1,0 +1,20 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: src/BudgetTracker.API/Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/data
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
