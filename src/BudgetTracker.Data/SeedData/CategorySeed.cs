@@ -23,6 +23,11 @@ public static class CategorySeed
             new Category { Id = 13, Name = "Personal Care", Color = "#FF99CC", IsDefault = true },
             new Category { Id = 14, Name = "Donations", Color = "#FFCC00", IsDefault = true },
             new Category { Id = 15, Name = "Other", Color = "#999999", IsDefault = true },
+            new Category { Id = 16, Name = "Pets & Vet", Color = "#7E57C2", IsDefault = true },
+            new Category { Id = 17, Name = "Phone & Utilities", Color = "#26A69A", IsDefault = true },
+            new Category { Id = 18, Name = "Travel & Transportation", Color = "#42A5F5", IsDefault = true },
+            new Category { Id = 19, Name = "Taxes & Fees", Color = "#8D6E63", IsDefault = true },
+            new Category { Id = 20, Name = "Home Improvement", Color = "#789262", IsDefault = true },
         ];
     }
 }
