@@ -1,6 +1,4 @@
 using System.Globalization;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.RegularExpressions;
 using BudgetTracker.Application.DTOs;
 
@@ -70,8 +68,9 @@ public static class FnboStatementTextParser
         void FinalizeCurrent()
         {
             if (current is null) return;
-            current.RawDescription = NormalizeWhitespace(string.Join(" ", descriptionParts));
-            current.DuplicateHash = ComputeHash(current.TransactionDate, current.Amount, current.RawDescription);
+            current.RawDescription = StatementParsingHelpers.NormalizeWhitespace(string.Join(" ", descriptionParts));
+            current.DuplicateHash = StatementParsingHelpers.ComputeDuplicateHash(
+                current.TransactionDate, current.Amount, current.RawDescription, SourceName);
             result.ParsedTransactions.Add(current);
             current = null;
             descriptionParts = new List<string>();
@@ -153,11 +152,11 @@ public static class FnboStatementTextParser
         // minus the stray leading MCC digit the PDF sometimes inserts.
         var descPart = rest[..amountMatch.Index];
         descPart = LeadingLoneDigit.Replace(descPart.TrimStart(), string.Empty);
-        description = NormalizeWhitespace(descPart);
+        description = StatementParsingHelpers.NormalizeWhitespace(descPart);
 
-        var transDate = ResolveDate(
+        var transDate = StatementParsingHelpers.ResolveDate(
             int.Parse(match.Groups["tm"].Value), int.Parse(match.Groups["td"].Value), closingDate);
-        var postDate = ResolveDate(
+        var postDate = StatementParsingHelpers.ResolveDate(
             int.Parse(match.Groups["pm"].Value), int.Parse(match.Groups["pd"].Value), closingDate);
 
         return new ParsedTransactionDto
@@ -167,26 +166,6 @@ public static class FnboStatementTextParser
             Amount = amount,
             IsCredit = isCredit
         };
-    }
-
-    /// <summary>
-    /// Statement rows show MM-DD with no year. Pick the year so the date falls on or before
-    /// the closing date (December rows on a January statement belong to the previous year).
-    /// </summary>
-    private static DateOnly ResolveDate(int month, int day, DateOnly? closingDate)
-    {
-        var anchor = closingDate ?? DateOnly.FromDateTime(DateTime.Today);
-        var candidate = SafeDate(anchor.Year, month, day);
-        if (candidate > anchor)
-            candidate = SafeDate(anchor.Year - 1, month, day);
-        return candidate;
-    }
-
-    private static DateOnly SafeDate(int year, int month, int day)
-    {
-        // Guard against an impossible day for the month (e.g. truncated/garbled input).
-        var clampedDay = Math.Min(day, DateTime.DaysInMonth(year, Math.Clamp(month, 1, 12)));
-        return new DateOnly(year, Math.Clamp(month, 1, 12), Math.Max(clampedDay, 1));
     }
 
     private static DateOnly? FindClosingDate(IReadOnlyList<string> lines)
@@ -199,7 +178,7 @@ public static class FnboStatementTextParser
 
             var year = int.Parse(m.Groups["y"].Value);
             if (year < 100) year += 2000;
-            var date = SafeDate(year, int.Parse(m.Groups["m"].Value), int.Parse(m.Groups["d"].Value));
+            var date = StatementParsingHelpers.SafeDate(year, int.Parse(m.Groups["m"].Value), int.Parse(m.Groups["d"].Value));
 
             // Prefer a 4-digit year match if we find one.
             if (best is null || m.Groups["y"].Value.Length == 4)
@@ -225,14 +204,4 @@ public static class FnboStatementTextParser
         line.StartsWith("Contact Information", StringComparison.OrdinalIgnoreCase) ||
         line.Contains("REWARD YOUR PASSION", StringComparison.OrdinalIgnoreCase) ||
         line.Contains("Passion Points", StringComparison.OrdinalIgnoreCase);
-
-    private static string NormalizeWhitespace(string value) =>
-        Regex.Replace(value, @"\s+", " ").Trim();
-
-    private static string ComputeHash(DateOnly date, decimal amount, string description)
-    {
-        var input = $"{date:yyyy-MM-dd}|{amount:F2}|{description}|{SourceName}";
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(input));
-        return Convert.ToHexStringLower(bytes);
-    }
 }
