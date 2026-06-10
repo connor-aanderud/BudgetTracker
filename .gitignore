@@ -483,3 +483,9 @@ $RECYCLE.BIN/
 
 # Node build output
 dist/
+
+# Claude Code local settings
+.claude/
+
+# Local sample bank statements (never commit - sensitive financial PDFs)
+samples/

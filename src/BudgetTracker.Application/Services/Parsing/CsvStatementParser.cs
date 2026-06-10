@@ -10,6 +10,9 @@ namespace BudgetTracker.Application.Services.Parsing;
 
 public class CsvStatementParser : IStatementParser
 {
+    public bool CanParse(string fileName) =>
+        fileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);
+
     public async Task<ParseResultDto> ParseAsync(Stream fileStream, string fileName)
     {
         var result = new ParseResultDto

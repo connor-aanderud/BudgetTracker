@@ -31,7 +31,7 @@ public class StatementsController : ControllerBase
     }
 
     /// <summary>
-    /// Upload a CSV file and get a preview of parsed transactions.
+    /// Upload a CSV or PDF statement and get a preview of parsed transactions.
     /// </summary>
     [HttpPost("upload")]
     public async Task<ActionResult<ApiResponse<ParseResultDto>>> Upload(IFormFile file)
@@ -39,8 +39,10 @@ public class StatementsController : ControllerBase
         if (file == null || file.Length == 0)
             return BadRequest(ApiResponse<ParseResultDto>.Fail("No file provided."));
 
-        if (!file.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
-            return BadRequest(ApiResponse<ParseResultDto>.Fail("Only CSV files are supported."));
+        var isSupported = file.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)
+            || file.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
+        if (!isSupported)
+            return BadRequest(ApiResponse<ParseResultDto>.Fail("Only CSV and PDF files are supported."));
 
         using var stream = file.OpenReadStream();
         var result = await _statementService.ParseUploadAsync(stream, file.FileName);
