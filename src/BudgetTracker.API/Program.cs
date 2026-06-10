@@ -27,8 +27,9 @@ builder.Services.AddScoped<IBudgetRepository, BudgetRepository>();
 
 // Services
 // Statement parsers — StatementService selects by file type (CanParse).
+// The PDF parser detects the bank (FNBO / Chase) from content and delegates.
 builder.Services.AddScoped<IStatementParser, CsvStatementParser>();
-builder.Services.AddScoped<IStatementParser, FnboStatementParser>();
+builder.Services.AddScoped<IStatementParser, PdfStatementParser>();
 builder.Services.AddScoped<ICategorizationService, CategorizationService>();
 builder.Services.AddScoped<StatementService>();
 builder.Services.AddScoped<IBudgetService, BudgetService>();
