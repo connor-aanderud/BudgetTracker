@@ -98,8 +98,10 @@ npm run dev
 
 - App: **<http://localhost:5173>**
 
-Open <http://localhost:5173> in your browser. The frontend calls the API at
-`http://localhost:5000` (CORS is already configured for the dev server).
+Open <http://localhost:5173> in your browser. The Vite dev server proxies the
+frontend's `/api` requests to the backend at `http://localhost:5000` — no extra
+config needed. (To point at a different API, set `VITE_API_URL` /
+`VITE_API_PROXY_TARGET`; see `client/.env.example`.)
 
 ---
 
