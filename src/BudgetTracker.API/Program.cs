@@ -68,11 +68,18 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Auto-create database on startup
+// Ensure the database exists on startup.
+// If EF migrations have been added (run `dotnet ef migrations add InitialCreate`
+// BEFORE the first launch), apply them so the schema is migration-managed and your
+// data survives future schema changes. Otherwise fall back to creating the schema
+// directly from the model (no migration history — fine for a quick start).
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<BudgetDbContext>();
-    db.Database.EnsureCreated();
+    if (db.Database.GetMigrations().Any())
+        db.Database.Migrate();
+    else
+        db.Database.EnsureCreated();
 }
 
 // Middleware pipeline

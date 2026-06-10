@@ -489,3 +489,8 @@ dist/
 
 # Local sample bank statements (never commit - sensitive financial PDFs)
 samples/
+
+# Local SQLite database (contains personal financial data - never commit)
+data/*.db
+*.db-shm
+*.db-wal
