@@ -26,7 +26,9 @@ builder.Services.AddScoped<IIncomeRepository, IncomeRepository>();
 builder.Services.AddScoped<IBudgetRepository, BudgetRepository>();
 
 // Services
+// Statement parsers — StatementService selects by file type (CanParse).
 builder.Services.AddScoped<IStatementParser, CsvStatementParser>();
+builder.Services.AddScoped<IStatementParser, FnboStatementParser>();
 builder.Services.AddScoped<ICategorizationService, CategorizationService>();
 builder.Services.AddScoped<StatementService>();
 builder.Services.AddScoped<IBudgetService, BudgetService>();

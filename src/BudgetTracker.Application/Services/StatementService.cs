@@ -6,18 +6,18 @@ namespace BudgetTracker.Application.Services;
 
 public class StatementService
 {
-    private readonly IStatementParser _parser;
+    private readonly IEnumerable<IStatementParser> _parsers;
     private readonly IStatementRepository _statementRepo;
     private readonly ITransactionRepository _transactionRepo;
     private readonly ICategorizationService _categorizationService;
 
     public StatementService(
-        IStatementParser parser,
+        IEnumerable<IStatementParser> parsers,
         IStatementRepository statementRepo,
         ITransactionRepository transactionRepo,
         ICategorizationService categorizationService)
     {
-        _parser = parser;
+        _parsers = parsers;
         _statementRepo = statementRepo;
         _transactionRepo = transactionRepo;
         _categorizationService = categorizationService;
@@ -25,7 +25,10 @@ public class StatementService
 
     public async Task<ParseResultDto> ParseUploadAsync(Stream fileStream, string fileName)
     {
-        var result = await _parser.ParseAsync(fileStream, fileName);
+        var parser = _parsers.FirstOrDefault(p => p.CanParse(fileName))
+            ?? throw new NotSupportedException($"No parser is available for file '{fileName}'.");
+
+        var result = await parser.ParseAsync(fileStream, fileName);
 
         // Check for duplicates against existing data
         var duplicateCount = 0;
